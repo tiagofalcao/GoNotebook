@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/tiagofalcao/GoNotebook/codejam/manager"
 )
@@ -12,14 +13,14 @@ import (
 func runCase(manager *manager.GCJManager) (result string) {
 
 	var N uint64
-	fmt.Scanf("%d", &N)
+	fmt.Fscanf(manager.Input, "%d", &N)
 
 	var y, maxDif, z uint64
 
 	cache := make([]uint64, N)
-	fmt.Scanf("%d", &(cache[0]))
+	fmt.Fscanf(manager.Input, "%d", &(cache[0]))
 	for i := uint64(1); i < N; i++ {
-		fmt.Scanf("%d", &(cache[i]))
+		fmt.Fscanf(manager.Input, "%d", &(cache[i]))
 		if cache[i] >= cache[i-1] {
 			continue
 		}
@@ -49,9 +50,6 @@ func runCase(manager *manager.GCJManager) (result string) {
   Google Code Jam Main
 ***********************************************************/
 func main() {
-	var cases uint64
-	fmt.Scanf("%d", &cases)
-
-	output := manager.NewGCJManager(cases, runCase)
-	output.WaitEnd()
+	flag.Parse()
+	manager.NewGCJManager(runCase).WaitEnd()
 }
