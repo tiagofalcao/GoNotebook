@@ -3,6 +3,7 @@ package manager
 import (
 	"container/heap"
 	"fmt"
+	"github.com/tiagofalcao/GoNotebook/log"
 	"io"
 	"os"
 )
@@ -21,30 +22,10 @@ type GCJManager struct {
 	Output     io.Writer
 }
 
-// NewGCJManager start the goroutine responsible by manage the io based on case
-func NewGCJManager(caseTask GCJCase) *GCJManager {
-	caseOutput := make(chan *googleCJCase, 100)
-	caseNotify := make(chan uint64)
-	endNotify := make(chan bool)
-	inputLock := make(chan bool)
-
-	manager := &GCJManager{
-		caseTask:   caseTask,
-		nextCase:   1,
-		pq:         make(outputQueue, 0, 1),
-		inputLock:  inputLock,
-		caseOutput: caseOutput,
-		caseNotify: caseNotify,
-		endNotify:  endNotify,
-	}
-
-	heap.Init(&manager.pq)
-	go manager.input()
-	return manager
-}
-
 // NewGCJManagerIO start the goroutine responsible by manage the io based on case
 func NewGCJManagerIO(caseTask GCJCase, input io.Reader, output io.Writer) *GCJManager {
+	log.Init(log.DefaultLevel)
+
 	caseOutput := make(chan *googleCJCase, 100)
 	caseNotify := make(chan uint64)
 	endNotify := make(chan bool)
@@ -65,6 +46,40 @@ func NewGCJManagerIO(caseTask GCJCase, input io.Reader, output io.Writer) *GCJMa
 	heap.Init(&manager.pq)
 	go manager.input()
 	return manager
+}
+
+// NewGCJManager start the goroutine responsible by manage the io based on case
+func NewGCJManager(caseTask GCJCase) *GCJManager {
+	var err interface{}
+	log.Init(log.DefaultLevel)
+
+	var input *os.File
+	if len(OptInput) > 0 {
+		log.Debug.Printf("Opening input: %s\n", OptInput)
+		input, err = os.Open(OptInput)
+		if err != nil {
+			panic(err)
+		}
+		//defer input.Close()
+	} else {
+		log.Debug.Println("Using stdin")
+		input = os.Stdin
+	}
+
+	var output *os.File
+	if len(OptOutput) > 0 {
+		log.Debug.Printf("Opening output: %s\n", OptOutput)
+		output, err = os.Create(OptOutput)
+		if err != nil {
+			panic(err)
+		}
+		//defer output.Close()
+	} else {
+		log.Debug.Println("Using stdout")
+		output = os.Stdout
+	}
+
+	return NewGCJManagerIO(caseTask, input, output)
 }
 
 func (manager GCJManager) end() bool {
@@ -111,25 +126,7 @@ func (manager GCJManager) printCase(item *googleCJCase) {
 	fmt.Fprintf(manager.Output, "Case #%d: %s\n", item.caseNum, item.value)
 }
 
-func (manager *GCJManager) setupInput() {
-	if manager.Input != nil {
-		return
-	}
-	var f *os.File
-	if len(OptInput) > 0 {
-		f, err := os.Open(OptInput)
-		if err != nil {
-			panic(err)
-		}
-		defer f.Close()
-	} else {
-		f = os.Stdin
-	}
-	manager.Input = f
-}
-
 func (manager *GCJManager) input() {
-	manager.setupInput()
 
 	fmt.Fscanf(manager.Input, "%d", &manager.cases)
 
@@ -137,46 +134,42 @@ func (manager *GCJManager) input() {
 
 	for i := uint64(1); i <= manager.cases; i++ {
 
+		log.Debug.Printf("Case %d lauching\n", i)
 		go func(caseNum uint64, caseManager *GCJManager) {
 			value := caseManager.caseTask(manager)
+			log.Debug.Printf("Case %d returned\n", caseNum)
 			manager.Print(caseNum, value)
 		}(i, manager)
 
 		manager.InputLock()
+		log.Debug.Printf("Case %d input ended\n", i)
 		if seqMode {
 			ret := <-manager.caseNotify
+			log.Info.Printf("Case %d ended\n", ret)
 			if ret != i {
 				panic("Notified another case. This is sequential mode!")
 			}
 		}
 	}
-}
 
-func (manager *GCJManager) setupOutput() {
-	if manager.Output != nil {
-		return
-	}
-	var f *os.File
-	if len(OptOutput) > 0 {
-		f, err := os.Create(OptOutput)
-		if err != nil {
-			panic(err)
+	if manager.Input != os.Stdin {
+		var input interface{} = manager.Input
+		switch v := input.(type) {
+		case *os.File:
+			v.Close()
 		}
-		defer f.Close()
-	} else {
-		f = os.Stdout
 	}
-	manager.Output = f
 }
 
 func (manager *GCJManager) output() {
-	manager.setupOutput()
 
 	for !manager.end() {
 		item := <-manager.caseOutput
+		log.Debug.Printf("Case %d output received\n", item.caseNum)
 
 		if item.caseNum != manager.nextCase {
 			heap.Push(&manager.pq, item)
+			log.Debug.Printf("Case %d output pushed\n", item.caseNum)
 			continue
 		}
 
@@ -192,4 +185,11 @@ func (manager *GCJManager) output() {
 		}
 	}
 	manager.endNotify <- true
+	if manager.Output != os.Stdout {
+		var output interface{} = manager.Output
+		switch v := output.(type) {
+		case *os.File:
+			v.Close()
+		}
+	}
 }
