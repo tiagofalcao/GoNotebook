@@ -13,14 +13,14 @@ import (
 func runCase(manager *manager.GCJManager) (result string) {
 
 	var N uint64
-	fmt.Fscanf(manager.Input, "%d", &N)
+	fmt.Fscanf(manager.Input, "%d\n", &N)
 
 	var y, maxDif, z uint64
 
 	cache := make([]uint64, N)
-	fmt.Fscanf(manager.Input, "%d", &(cache[0]))
+	fmt.Fscanf(manager.Input, "%d ", &(cache[0]))
 	for i := uint64(1); i < N; i++ {
-		fmt.Fscanf(manager.Input, "%d", &(cache[i]))
+		fmt.Fscanf(manager.Input, "%d ", &(cache[i]))
 		if cache[i] >= cache[i-1] {
 			continue
 		}
