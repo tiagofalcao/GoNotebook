@@ -11,6 +11,7 @@ var OptOutput string
 var OptInput string
 
 var seqMode bool
+var flushMode bool
 
 func init() {
 	flag.StringVar(&OptOutput, "output", "", "Output File")
@@ -18,4 +19,5 @@ func init() {
 	flag.StringVar(&OptInput, "input", "", "Output File")
 	flag.StringVar(&OptInput, "i", "", "Output File")
 	flag.BoolVar(&seqMode, "seq", false, "Force sequential mode")
+	flag.BoolVar(&flushMode, "flush", true, "Force flush all output")
 }

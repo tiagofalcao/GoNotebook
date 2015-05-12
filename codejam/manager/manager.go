@@ -88,10 +88,18 @@ func NewGCJManager(caseTask GCJCase) *GCJManager {
 		if err != nil {
 			panic(err)
 		}
-		output = bufio.NewWriter(outputFile)
+		if flushMode {
+			output = outputFile
+		} else {
+			output = bufio.NewWriter(outputFile)
+		}
 	} else {
 		log.Debug.Println("Using stdout")
-		output = bufio.NewWriter(os.Stdout)
+		if flushMode {
+			output = os.Stdout
+		} else {
+			output = bufio.NewWriter(os.Stdout)
+		}
 	}
 
 	return NewGCJManagerFile(caseTask, input, inputFile, output, outputFile)
