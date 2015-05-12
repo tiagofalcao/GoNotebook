@@ -32,7 +32,7 @@ func NewGCJManagerFile(caseTask GCJCase, input *bufio.Reader, inputFile *os.File
 	log.Init(log.DefaultLevel)
 
 	caseOutput := make(chan *googleCJCase, 100)
-	caseNotify := make(chan uint64)
+	caseNotify := make(chan uint64, 10)
 	endNotify := make(chan bool)
 	inputLock := make(chan bool)
 
