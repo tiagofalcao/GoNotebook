@@ -6,6 +6,8 @@ import (
 	"github.com/tiagofalcao/GoNotebook/log"
 	"io"
 	"os"
+	"unicode"
+	"unicode/utf8"
 )
 
 // GCJManager manage the io of each GCJ case
@@ -123,6 +125,14 @@ func (manager GCJManager) notifyCaseEnd(caseNum uint64) {
 }
 
 func (manager GCJManager) printCase(item *googleCJCase) {
+	first, size := utf8.DecodeRuneInString(item.value)
+	if size == 0 {
+		log.Error.Println("Non utf8 rune")
+	}
+	if unicode.IsSpace(first) {
+		fmt.Fprintf(manager.Output, "Case #%d:%s\n", item.caseNum, item.value)
+		return
+	}
 	fmt.Fprintf(manager.Output, "Case #%d: %s\n", item.caseNum, item.value)
 }
 
