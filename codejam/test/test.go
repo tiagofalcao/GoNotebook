@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bufio"
 	"github.com/tiagofalcao/GoNotebook/codejam/manager"
 	"github.com/tiagofalcao/GoNotebook/diff"
 	"os"
@@ -23,8 +24,8 @@ func Test(t *testing.T, input string, caseTask manager.GCJCase, output string) {
 	}
 	o := diff.NewBuf(b, callbackErr, t)
 
-	manager.NewGCJManagerIO(caseTask, i, o).WaitEnd()
+	manager.NewGCJManagerIO(caseTask, bufio.NewReader(i), o).WaitEnd()
 
 	i.Close()
-	o.Close()
+	b.Close()
 }

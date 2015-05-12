@@ -65,14 +65,18 @@ func calc(trees []tree, i uint64) uint64 {
 func runCase(manager *manager.GCJManager) (result string) {
 
 	var N uint64
-	fmt.Fscanf(manager.Input, "%d", &N)
+	log.Debug.Println(manager.Input.Peek(10))
+	fmt.Fscanf(manager.Input, "%d\n", &N)
+	log.Debug.Println(manager.Input.Peek(10))
+	log.Debug.Println(N)
 
 	trees := make([]tree, N)
 	for i := uint64(0); i < N; i++ {
-		fmt.Fscanf(manager.Input, "%d %d", &trees[i].x, &trees[i].y)
+		fmt.Fscanf(manager.Input, "%d %d\n", &trees[i].x, &trees[i].y)
 	}
 
 	manager.InputUnlock()
+	log.Debug.Println(trees)
 
 	var b bytes.Buffer
 

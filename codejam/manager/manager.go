@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"bufio"
 	"container/heap"
 	"fmt"
 	"github.com/tiagofalcao/GoNotebook/log"
@@ -20,12 +21,14 @@ type GCJManager struct {
 	caseOutput chan *googleCJCase
 	caseNotify chan uint64
 	endNotify  chan bool
-	Input      io.Reader
+	Input      *bufio.Reader
+	inputFile  *os.File
 	Output     io.Writer
+	outputFile *os.File
 }
 
-// NewGCJManagerIO start the goroutine responsible by manage the io based on case
-func NewGCJManagerIO(caseTask GCJCase, input io.Reader, output io.Writer) *GCJManager {
+// NewGCJManagerFile start the goroutine responsible by manage the io based on case
+func NewGCJManagerFile(caseTask GCJCase, input *bufio.Reader, inputFile *os.File, output io.Writer, outputFile *os.File) *GCJManager {
 	log.Init(log.DefaultLevel)
 
 	caseOutput := make(chan *googleCJCase, 100)
@@ -42,7 +45,9 @@ func NewGCJManagerIO(caseTask GCJCase, input io.Reader, output io.Writer) *GCJMa
 		caseNotify: caseNotify,
 		endNotify:  endNotify,
 		Input:      input,
+		inputFile:  inputFile,
 		Output:     output,
+		outputFile: outputFile,
 	}
 
 	heap.Init(&manager.pq)
@@ -50,38 +55,46 @@ func NewGCJManagerIO(caseTask GCJCase, input io.Reader, output io.Writer) *GCJMa
 	return manager
 }
 
+// NewGCJManagerIO start the goroutine responsible by manage the io based on case
+func NewGCJManagerIO(caseTask GCJCase, input *bufio.Reader, output io.Writer) *GCJManager {
+	return NewGCJManagerFile(caseTask, input, nil, output, nil)
+}
+
 // NewGCJManager start the goroutine responsible by manage the io based on case
 func NewGCJManager(caseTask GCJCase) *GCJManager {
 	var err interface{}
 	log.Init(log.DefaultLevel)
 
-	var input *os.File
+	var input *bufio.Reader
+	var output io.Writer
+
+	var inputFile *os.File
 	if len(OptInput) > 0 {
 		log.Debug.Printf("Opening input: %s\n", OptInput)
-		input, err = os.Open(OptInput)
+		inputFile, err = os.Open(OptInput)
 		if err != nil {
 			panic(err)
 		}
-		//defer input.Close()
+		input = bufio.NewReader(inputFile)
 	} else {
 		log.Debug.Println("Using stdin")
-		input = os.Stdin
+		input = bufio.NewReader(os.Stdin)
 	}
 
-	var output *os.File
+	var outputFile *os.File
 	if len(OptOutput) > 0 {
 		log.Debug.Printf("Opening output: %s\n", OptOutput)
-		output, err = os.Create(OptOutput)
+		outputFile, err = os.Create(OptOutput)
 		if err != nil {
 			panic(err)
 		}
-		//defer output.Close()
+		output = bufio.NewWriter(outputFile)
 	} else {
 		log.Debug.Println("Using stdout")
-		output = os.Stdout
+		output = bufio.NewWriter(os.Stdout)
 	}
 
-	return NewGCJManagerIO(caseTask, input, output)
+	return NewGCJManagerFile(caseTask, input, inputFile, output, outputFile)
 }
 
 func (manager GCJManager) end() bool {
@@ -138,7 +151,10 @@ func (manager GCJManager) printCase(item *googleCJCase) {
 
 func (manager *GCJManager) input() {
 
-	fmt.Fscanf(manager.Input, "%d", &manager.cases)
+	log.Debug.Println(manager.Input.Peek(10))
+	fmt.Fscanf(manager.Input, "%d\n", &manager.cases)
+	log.Debug.Println(manager.Input.Peek(10))
+	log.Debug.Printf("Running %d cases", manager.cases)
 
 	go manager.output()
 
@@ -162,12 +178,8 @@ func (manager *GCJManager) input() {
 		}
 	}
 
-	if manager.Input != os.Stdin {
-		var input interface{} = manager.Input
-		switch v := input.(type) {
-		case *os.File:
-			v.Close()
-		}
+	if manager.inputFile != nil {
+		manager.inputFile.Close()
 	}
 }
 
@@ -195,11 +207,15 @@ func (manager *GCJManager) output() {
 		}
 	}
 	manager.endNotify <- true
-	if manager.Output != os.Stdout {
-		var output interface{} = manager.Output
-		switch v := output.(type) {
-		case *os.File:
-			v.Close()
-		}
+
+	var output interface{} = manager.Output
+	switch v := output.(type) {
+	case bufio.Writer:
+		v.Flush()
 	}
+
+	if manager.outputFile != nil {
+		manager.outputFile.Close()
+	}
+
 }

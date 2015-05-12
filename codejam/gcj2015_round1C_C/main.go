@@ -13,11 +13,11 @@ import (
 func runCase(manager *manager.GCJManager) (result string) {
 
 	var C, D, V uint64
-	fmt.Fscanf(manager.Input, "%d %d %d", &C, &D, &V)
+	fmt.Fscanf(manager.Input, "%d %d %d\n", &C, &D, &V)
 
 	values := make([]uint64, D)
 	for i := uint64(0); i < D; i++ {
-		fmt.Fscanf(manager.Input, "%d", &values[i])
+		fmt.Fscanf(manager.Input, "%d ", &values[i])
 	}
 
 	manager.InputUnlock()
