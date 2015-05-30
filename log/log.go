@@ -26,6 +26,13 @@ var (
 	Error   *log.Logger = log.New(ioutil.Discard, ErrorLevel+" :", log.Lshortfile)
 )
 
+var (
+	DebugEnabled   bool
+	InfoEnabled    bool
+	WarningEnabled bool
+	ErrorEnabled   bool
+)
+
 var optLog string = WarningLevel
 
 func init() {
@@ -50,23 +57,27 @@ func Init(l LogLevel) {
 	}
 
 	Error = log.New(os.Stderr, ErrorLevel+" :", log.Lshortfile)
+	ErrorEnabled = true
 
 	if strings.EqualFold(ErrorLevel, level) {
 		return
 	}
 
 	Warning = log.New(os.Stdout, WarningLevel+" :", log.Lshortfile)
+	WarningEnabled = true
 
 	if strings.EqualFold(WarningLevel, level) {
 		return
 	}
 
 	Info = log.New(os.Stdout, InfoLevel+" :", log.Lshortfile)
+	InfoEnabled = true
 
 	if strings.EqualFold(InfoLevel, level) {
 		return
 	}
 
 	Debug = log.New(os.Stdout, DebugLevel+" :", log.Lshortfile)
+	DebugEnabled = true
 
 }
