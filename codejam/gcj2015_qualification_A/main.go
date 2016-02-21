@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"github.com/tiagofalcao/GoNotebook/codejam/manager"
@@ -10,14 +11,14 @@ import (
 	Case Code
 ******************************************/
 
-func runCase(manager *manager.GCJManager) (result string) {
+func runCase(input *bufio.Reader, inputLock chan bool) (result string) {
 	var S uint64
-	fmt.Fscanf(manager.Input, "%d ", &S)
+	fmt.Fscanf(input, "%d ", &S)
 
 	var audienceStr string
-	fmt.Fscanf(manager.Input, "%s\n", &audienceStr)
+	fmt.Fscanf(input, "%s\n", &audienceStr)
 
-	manager.InputUnlock()
+	inputLock <- true
 
 	runes := []rune(audienceStr)
 
@@ -33,7 +34,7 @@ func runCase(manager *manager.GCJManager) (result string) {
 
 		stoodUp += audience
 	}
-	return fmt.Sprintf("%d", friends)
+	return fmt.Sprintf(" %d\n", friends)
 }
 
 /**********************************************************

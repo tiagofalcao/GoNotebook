@@ -1,6 +1,6 @@
-package manager
+package executioncases
 
-type outputQueue []*googleCJCase
+type outputQueue []*caseOutput
 
 func (output outputQueue) Len() int { return len(output) }
 
@@ -16,12 +16,12 @@ func (output outputQueue) Swap(i, j int) {
 
 func (output *outputQueue) Push(x interface{}) {
 	n := output.Len()
-	item := x.(*googleCJCase)
+	item := x.(*caseOutput)
 	item.index = n
 	*output = append(*output, item)
 }
 
-func (output outputQueue) Head() *googleCJCase {
+func (output outputQueue) Head() *caseOutput {
 	return output[0]
 }
 

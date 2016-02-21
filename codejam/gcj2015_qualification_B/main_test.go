@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/tiagofalcao/GoNotebook/codejam/test"
+	"github.com/tiagofalcao/GoNotebook/codejam/manager/test"
 	"testing"
 )
 

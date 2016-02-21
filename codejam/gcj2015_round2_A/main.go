@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"github.com/tiagofalcao/GoNotebook/codejam/manager"
@@ -38,17 +39,17 @@ func printG(grid [][]uint8) {
 	Case Code
 ******************************************/
 
-func runCase(manager *manager.GCJManager) (result string) {
+func runCase(input *bufio.Reader, inputLock chan bool) (result string) {
 
 	var R, C uint64
-	fmt.Fscanf(manager.Input, "%d %d\n", &R, &C)
+	fmt.Fscanf(input, "%d %d\n", &R, &C)
 
 	grid := make([][]uint8, R)
 	for i := uint64(0); i < R; i++ {
 		grid[i] = make([]uint8, C)
 
 		for j := uint64(0); j < C; j++ {
-			r, _, _ := manager.Input.ReadRune()
+			r, _, _ := input.ReadRune()
 			switch r {
 			case '.':
 				grid[i][j] = blankArrow
@@ -63,10 +64,10 @@ func runCase(manager *manager.GCJManager) (result string) {
 			default:
 			}
 		}
-		manager.Input.ReadRune()
+		input.ReadRune()
 	}
 
-	manager.InputUnlock()
+	inputLock <- true
 
 	if log.InfoEnabled {
 		printG(grid)
@@ -185,14 +186,14 @@ func runCase(manager *manager.GCJManager) (result string) {
 				grid[i][j] = failArrow
 				printG(grid)
 			}
-			return "IMPOSSIBLE"
+			return " IMPOSSIBLE\n"
 		}
 	}
 
 	if log.InfoEnabled {
 		printG(grid)
 	}
-	return fmt.Sprintf("%d", changes)
+	return fmt.Sprintf(" %d\n", changes)
 }
 
 /**********************************************************

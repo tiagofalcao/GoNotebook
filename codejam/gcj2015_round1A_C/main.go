@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"flag"
 	"fmt"
 	"github.com/tiagofalcao/GoNotebook/codejam/manager"
 	"github.com/tiagofalcao/GoNotebook/instances"
 	"github.com/tiagofalcao/GoNotebook/log"
+	"io"
 	"math"
 	"sort"
 )
@@ -62,20 +64,18 @@ func calc(trees []tree, i uint64) uint64 {
 	return N - 1 - max
 }
 
-func runCase(manager *manager.GCJManager) (result string) {
+func runCase(input *bufio.Reader, inputLock chan bool) (result string) {
 
 	var N uint64
-	log.Debug.Println(manager.Input.Peek(10))
-	fmt.Fscanf(manager.Input, "%d\n", &N)
-	log.Debug.Println(manager.Input.Peek(10))
+	fmt.Fscanf(input, "%d\n", &N)
 	log.Debug.Println(N)
 
 	trees := make([]tree, N)
 	for i := uint64(0); i < N; i++ {
-		fmt.Fscanf(manager.Input, "%d %d\n", &trees[i].x, &trees[i].y)
+		fmt.Fscanf(input, "%d %d\n", &trees[i].x, &trees[i].y)
 	}
 
-	manager.InputUnlock()
+	inputLock <- true
 	log.Debug.Println(trees)
 
 	var b bytes.Buffer
@@ -84,6 +84,7 @@ func runCase(manager *manager.GCJManager) (result string) {
 		for i := uint64(0); i < N; i++ {
 			fmt.Fprintf(&b, "\n0")
 		}
+		io.WriteString(&b, "\n")
 		return b.String()
 	}
 
@@ -100,6 +101,7 @@ func runCase(manager *manager.GCJManager) (result string) {
 		fmt.Fprintf(&b, "\n%d", man.Results[i].(uint64))
 	}
 
+	io.WriteString(&b, "\n")
 	return b.String()
 
 }

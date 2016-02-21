@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"github.com/tiagofalcao/GoNotebook/codejam/manager"
@@ -10,11 +11,11 @@ import (
 	Case Code
 ******************************************/
 
-func runCase(manager *manager.GCJManager) (result string) {
+func runCase(input *bufio.Reader, inputLock chan bool) (result string) {
 
-	manager.InputUnlock()
+	inputLock <- true
 
-	return fmt.Sprintf("")
+	return fmt.Sprintf(" \n")
 
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"github.com/tiagofalcao/GoNotebook/codejam/manager"
@@ -10,17 +11,17 @@ import (
 	Case Code
 ******************************************/
 
-func runCase(manager *manager.GCJManager) (result string) {
+func runCase(input *bufio.Reader, inputLock chan bool) (result string) {
 
 	var N uint64
-	fmt.Fscanf(manager.Input, "%d\n", &N)
+	fmt.Fscanf(input, "%d\n", &N)
 
 	var y, maxDif, z uint64
 
 	cache := make([]uint64, N)
-	fmt.Fscanf(manager.Input, "%d ", &(cache[0]))
+	fmt.Fscanf(input, "%d ", &(cache[0]))
 	for i := uint64(1); i < N; i++ {
-		fmt.Fscanf(manager.Input, "%d ", &(cache[i]))
+		fmt.Fscanf(input, "%d ", &(cache[i]))
 		if cache[i] >= cache[i-1] {
 			continue
 		}
@@ -31,7 +32,7 @@ func runCase(manager *manager.GCJManager) (result string) {
 		}
 	}
 
-	manager.InputUnlock()
+	inputLock <- true
 
 	for i := uint64(0); i < N-1; i++ {
 		dif := cache[i]
@@ -42,7 +43,7 @@ func runCase(manager *manager.GCJManager) (result string) {
 		}
 	}
 
-	return fmt.Sprintf("%d %d", y, z)
+	return fmt.Sprintf(" %d %d\n", y, z)
 
 }
 
