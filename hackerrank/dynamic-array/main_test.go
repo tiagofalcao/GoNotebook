@@ -11,3 +11,9 @@ func TestSample(t *testing.T) {
 
 	test.Test(t, input, runCase, output, nil)
 }
+
+func BenchmarkSample(b *testing.B) {
+	input := "sample.in"
+
+	test.Benchmark(b, input, runCase)
+}

@@ -25,3 +25,9 @@ func TestLarge(t *testing.T) {
 
 	test.Test(t, input, runCase, output)
 }
+
+func BenchmarkSample(b *testing.B) {
+	input := "C-large-practice.in"
+
+	test.Benchmark(b, input, runCase)
+}

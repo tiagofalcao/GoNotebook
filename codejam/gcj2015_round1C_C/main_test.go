@@ -32,3 +32,9 @@ func TestLarge(t *testing.T) {
 
 	test.Test(t, input, runCase, output)
 }
+
+func BenchmarkLarge(b *testing.B) {
+	input := "C-large.in"
+
+	test.Benchmark(b, input, runCase)
+}
