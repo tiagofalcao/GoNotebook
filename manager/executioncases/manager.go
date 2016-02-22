@@ -9,6 +9,8 @@ import (
 	"os"
 )
 
+import coremanager "github.com/tiagofalcao/GoNotebook/manager"
+
 type ExecutionManager struct {
 	cases      uint64         // Amount of Cases
 	caseTask   ExecutionCase  // Execute Case function
@@ -68,9 +70,9 @@ func NewExecutionManager(caseTask ExecutionCase, print CasePrint) *ExecutionMana
 	var output io.Writer
 
 	var inputFile *os.File
-	if len(OptInput) > 0 {
-		log.Debug.Printf("Opening input: %s\n", OptInput)
-		inputFile, err = os.Open(OptInput)
+	if len(coremanager.OptInput) > 0 {
+		log.Debug.Printf("Opening input: %s\n", coremanager.OptInput)
+		inputFile, err = os.Open(coremanager.OptInput)
 		if err != nil {
 			panic(err)
 		}
@@ -81,20 +83,20 @@ func NewExecutionManager(caseTask ExecutionCase, print CasePrint) *ExecutionMana
 	}
 
 	var outputFile *os.File
-	if len(OptOutput) > 0 {
-		log.Debug.Printf("Opening output: %s\n", OptOutput)
-		outputFile, err = os.Create(OptOutput)
+	if len(coremanager.OptOutput) > 0 {
+		log.Debug.Printf("Opening output: %s\n", coremanager.OptOutput)
+		outputFile, err = os.Create(coremanager.OptOutput)
 		if err != nil {
 			panic(err)
 		}
-		if flushMode {
+		if coremanager.FlushMode {
 			output = outputFile
 		} else {
 			output = bufio.NewWriter(outputFile)
 		}
 	} else {
 		log.Debug.Println("Using stdout")
-		if flushMode {
+		if coremanager.FlushMode {
 			output = os.Stdout
 		} else {
 			output = bufio.NewWriter(os.Stdout)
@@ -164,7 +166,7 @@ func (manager *ExecutionManager) input() {
 
 		manager.InputLock()
 		log.Debug.Printf("Case %d input ended\n", i)
-		if seqMode {
+		if SeqMode {
 			ret := <-manager.caseNotify
 			log.Info.Printf("Case %d ended\n", ret)
 			if ret != i {

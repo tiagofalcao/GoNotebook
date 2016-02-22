@@ -7,10 +7,11 @@ import (
 	"testing"
 )
 
-import manager "github.com/tiagofalcao/GoNotebook/manager/executioncases"
-import test "github.com/tiagofalcao/GoNotebook/manager/test"
+import manager "github.com/tiagofalcao/GoNotebook/manager"
 
-func Test(t *testing.T, input string, caseTask manager.ExecutionCase, print manager.CasePrint, output string, cmp test.CompareTest) {
+type CompareTest func(output, expected []string, t *testing.T) bool
+
+func Test(t *testing.T, input string, caseTask manager.Task, output string, cmp CompareTest) {
 	i, err := os.Open(input)
 	if err != nil {
 		t.Errorf("Can't open %s", input)
@@ -20,7 +21,7 @@ func Test(t *testing.T, input string, caseTask manager.ExecutionCase, print mana
 		t.Errorf("Can't open %s", output)
 	}
 	if cmp == nil {
-		cmp = test.CompareTestDefault
+		cmp = CompareTestDefault
 	}
 	test := func(output, expected []string, value interface{}) bool {
 			t := value.(*testing.T)
@@ -28,7 +29,7 @@ func Test(t *testing.T, input string, caseTask manager.ExecutionCase, print mana
 	}
 	o := diff.NewBuf(b, test, t)
 
-	manager.NewExecutionManagerIO(caseTask, print, bufio.NewReader(i), o).WaitEnd()
+	manager.NewManagerIO(caseTask, bufio.NewReader(i), o)
 
 	i.Close()
 	b.Close()
