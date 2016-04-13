@@ -2,11 +2,12 @@ package executioncases
 
 import (
 	"flag"
+	"runtime"
 )
 
 // Run only one test case each time
-var SeqMode bool
+var ParallelMode int
 
 func init() {
-	flag.BoolVar(&SeqMode, "seq", false, "Force sequential mode")
+	flag.IntVar(&ParallelMode, "n", runtime.GOMAXPROCS(-1), "How many cases in parallel")
 }

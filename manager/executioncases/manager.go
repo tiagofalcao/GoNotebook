@@ -7,6 +7,7 @@ import (
 	"github.com/tiagofalcao/GoNotebook/log"
 	"io"
 	"os"
+	"runtime"
 )
 
 import coremanager "github.com/tiagofalcao/GoNotebook/manager"
@@ -25,6 +26,7 @@ type ExecutionManager struct {
 	inputFile  *os.File
 	Output     io.Writer
 	outputFile *os.File
+	Timing     []timing
 }
 
 // NewExecutionManagerFile start the goroutine responsible by manage the io based on case
@@ -32,13 +34,13 @@ func NewExecutionManagerFile(caseTask ExecutionCase, print CasePrint, input *buf
 	log.Init(log.DefaultLevel)
 
 	caseOutput := make(chan *caseOutput, 100)
-	caseNotify := make(chan uint64, 10)
+	caseNotify := make(chan uint64, 100)
 	endNotify := make(chan bool)
 	inputLock := make(chan bool)
 
 	manager := &ExecutionManager{
 		caseTask:   caseTask,
-		nextCase:   1,
+		nextCase:   0,
 		casePrint:  print,
 		pq:         make(outputQueue, 0, 1),
 		inputLock:  inputLock,
@@ -49,6 +51,7 @@ func NewExecutionManagerFile(caseTask ExecutionCase, print CasePrint, input *buf
 		inputFile:  inputFile,
 		Output:     output,
 		outputFile: outputFile,
+		Timing:     nil,
 	}
 
 	heap.Init(&manager.pq)
@@ -107,7 +110,7 @@ func NewExecutionManager(caseTask ExecutionCase, print CasePrint) *ExecutionMana
 }
 
 func (manager ExecutionManager) end() bool {
-	return manager.nextCase > manager.cases
+	return manager.nextCase >= manager.cases
 }
 
 // Print send a request to print the return of a case
@@ -140,24 +143,38 @@ func (manager *ExecutionManager) InputLock() {
 }
 
 func (manager ExecutionManager) notifyCaseEnd(caseNum uint64) {
-	select {
-	case manager.caseNotify <- caseNum:
-	default:
+	manager.caseNotify <- caseNum
+}
+
+func (manager ExecutionManager) caseEnd(caseNum, running uint64) uint64 {
+	t := manager.Timing[caseNum]
+	complete := t.complete()
+	reading := t.reading()
+	computing := t.reading()
+	log.Info.Printf("Case %d ended: %v [%v | %v]\n", caseNum, complete, reading, computing )
+	if computing > (2 * reading) && ParallelMode < runtime.NumCPU() {
+		ParallelMode += 1
 	}
+	return running - 1
 }
 
 func (manager *ExecutionManager) input() {
 
-	log.Debug.Println(manager.Input.Peek(10))
 	fmt.Fscanf(manager.Input, "%d\n", &manager.cases)
-	log.Debug.Println(manager.Input.Peek(10))
 	log.Debug.Printf("Running %d cases", manager.cases)
+
+	manager.Timing = make([]timing, manager.cases)
 
 	go manager.output()
 
-	for i := uint64(1); i <= manager.cases; i++ {
+	running := uint64(0)
+
+	for i := uint64(0); i < manager.cases; i++ {
 
 		log.Debug.Printf("Case %d lauching\n", i)
+		running += 1
+
+		manager.Timing[i].start()
 		go func(caseNum uint64, caseManager *ExecutionManager) {
 			value := caseManager.caseTask(manager.Input, manager.inputLock)
 			log.Debug.Printf("Case %d returned\n", caseNum)
@@ -165,13 +182,22 @@ func (manager *ExecutionManager) input() {
 		}(i, manager)
 
 		manager.InputLock()
+    manager.Timing[i].read()
 		log.Debug.Printf("Case %d input ended\n", i)
-		if SeqMode {
+
+		log.Info.Printf("Running %d cases\n", running)
+
+		// Try fetch a case notification
+		select {
+		case ret := <-manager.caseNotify:
+		running = manager.caseEnd(ret, running)
+		default:
+		}
+
+		// Too many running, wait to fetch a case notification
+		for running >= uint64(ParallelMode) {
 			ret := <-manager.caseNotify
-			log.Info.Printf("Case %d ended\n", ret)
-			if ret != i {
-				panic("Notified another case. This is sequential mode!")
-			}
+			running = manager.caseEnd(ret, running)
 		}
 	}
 
@@ -184,6 +210,7 @@ func (manager *ExecutionManager) output() {
 
 	for !manager.end() {
 		item := <-manager.caseOutput
+		manager.Timing[item.caseNum].end()
 		log.Debug.Printf("Case %d output received\n", item.caseNum)
 
 		if item.caseNum != manager.nextCase {
