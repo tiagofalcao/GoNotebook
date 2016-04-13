@@ -6,28 +6,28 @@ import (
 )
 
 func TestSample(t *testing.T) {
-	input := "A-sample.in"
-	output := "A-sample.out"
+	input := "sample.in"
+	output := "sample.out"
 
 	test.Test(t, input, runCase, output)
 }
 
 func TestSmall0(t *testing.T) {
-	input := "A-small-practice.in"
-	output := "A-small-practice.out"
+	input := "small-practice.in"
+	output := "small-practice.out"
 
 	test.Test(t, input, runCase, output)
 }
 
 func TestLarge(t *testing.T) {
-	input := "A-large-practice.in"
-	output := "A-large-practice.out"
+	input := "large-practice.in"
+	output := "large-practice.out"
 
 	test.Test(t, input, runCase, output)
 }
 
 func BenchmarkLarge(b *testing.B) {
-	input := "A-large-practice.in"
+	input := "large-practice.in"
 
 	test.Benchmark(b, input, runCase)
 }
